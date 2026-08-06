@@ -51,10 +51,23 @@
 
     /* ─────────── Instrument rail ─────────── */
     .rail{
+      position:relative;
       width:344px; min-width:344px; display:flex; flex-direction:column; min-height:0;
       background:linear-gradient(180deg,var(--panel-2),var(--panel) 42%);
       border-right:1px solid var(--groove); box-shadow:1px 0 0 var(--bezel), 7px 0 26px rgba(0,0,0,.6); z-index:10;
+      transition: margin-left 0.3s cubic-bezier(.16,1,.3,1);
     }
+    .rail.collapsed { margin-left: -344px; }
+    .rail-toggle {
+      position:absolute; top:16px; right:-24px; width:24px; height:36px;
+      background:var(--face); border:1px solid var(--bezel); border-left:none;
+      border-radius:0 var(--r-sm) var(--r-sm) 0; display:grid; place-items:center;
+      color:var(--ink-dim); cursor:pointer; z-index:20;
+      box-shadow: 2px 0 5px rgba(0,0,0,.4); transition: color .12s, background .12s;
+    }
+    .rail-toggle:hover { color:var(--ink-face); background:var(--face-2); }
+    .rail-toggle svg { width:14px; height:14px; transition: transform 0.3s cubic-bezier(.16,1,.3,1); }
+    .rail.collapsed .rail-toggle svg { transform: rotate(180deg); }
     .groove{ border-top:1px solid var(--groove); box-shadow:0 1px 0 rgba(255,255,255,.045); }
 
     .mast{ display:flex; align-items:center; gap:12px; padding:17px 20px 16px; flex:none; }
@@ -279,6 +292,8 @@
     .rec-spinner{ width:26px; height:26px; margin:0 auto 14px; border:2.5px solid var(--bezel); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; }
 
     @media (max-width:760px){
+      .rail.collapsed { margin-left: 0; }
+      .rail-toggle { display: none; }
       .rec-modal-body{ grid-template-columns:1fr; }
       .app{ flex-direction:column; }
       .rail{ width:100%; min-width:0; max-width:100vw; max-height:46vh; overflow:hidden auto; border-right:none; border-bottom:1px solid var(--groove); box-shadow:0 1px 0 var(--bezel); }
@@ -294,6 +309,9 @@
   <div class="app">
     <!-- INSTRUMENT RAIL -->
     <aside class="rail">
+      <button class="rail-toggle" id="btnToggleRail" aria-label="Toggle Panel" title="Toggle Panel ( [ )">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
       <div class="mast">
         <a class="brandlink" href="/" title="Back to graph index" style="display:flex;align-items:center;gap:12px;">
           <span class="mark">
@@ -954,6 +972,10 @@
     document.getElementById('btnZoomOut').addEventListener('click',()=>zoomBy(0.7));
     document.getElementById('btnReset').addEventListener('click',()=>{ userInteracted=true; autoFitting=false; autoFitCamera(); });
     document.getElementById('btnPhysics').addEventListener('click',e=>{ physicsEnabled=!physicsEnabled; e.currentTarget.classList.toggle('active',physicsEnabled); if(worker) worker.postMessage({type:physicsEnabled?'START':'STOP'}); });
+    document.getElementById('btnToggleRail').addEventListener('click',()=>{
+      document.querySelector('.rail').classList.toggle('collapsed');
+      setTimeout(resizeCanvas, 300);
+    });
     document.getElementById('btnToggleLabels').addEventListener('click',e=>{ showLabels=!showLabels; e.currentTarget.classList.toggle('active',showLabels); });
     document.getElementById('btnToggleFlows').addEventListener('click',e=>{ showFlows=!showFlows; e.currentTarget.classList.toggle('active',showFlows); });
     function zoomBy(f){ autoFitting=false; userInteracted=true; targetCamera.zoom=Math.max(0.05,Math.min(6,targetCamera.zoom*f)); targetCamera.x=canvas.width/2-(canvas.width/2-targetCamera.x)*f; targetCamera.y=canvas.height/2-(canvas.height/2-targetCamera.y)*f; }
@@ -973,7 +995,8 @@
         const next=items[e.key==='ArrowDown'?Math.min(idx+1,items.length-1):Math.max(idx-1,0)]; if(next) next.focus(); return;
       }
       if(typing) return;
-      if(e.key==='/'){ e.preventDefault(); document.getElementById('searchInput').focus(); }
+      if(e.key==='['){ document.getElementById('btnToggleRail').click(); }
+      else if(e.key==='/'){ e.preventDefault(); document.getElementById('searchInput').focus(); }
       else if(e.key==='f'||e.key==='F'){ autoFitCamera(); }
       else if(e.key==='+'||e.key==='='){ zoomBy(1.3); }
       else if(e.key==='-'||e.key==='_'){ zoomBy(0.7); }
